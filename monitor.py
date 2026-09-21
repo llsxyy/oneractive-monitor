@@ -1,6 +1,7 @@
 import json, os, requests
 
 BASE = "https://www.oneractive.com"
+MAX_PRICE = 25   # 只盯低於這個價錢，None 代表不限
 WATCH_SIZES = ["XS", "S", "M", "L"]   # 只盯這些尺寸，[] 代表全部
 KEYWORDS = ["timeless", "everyday", "unified"]              # 例如 ["leggings", "bra"]，[] 代表全部商品
 EXCLUDE = ["gift card"]    # 排除的關鍵字
@@ -51,6 +52,15 @@ def size_ok(variant_title):
     parts = variant_title.split(" / ")
     return any(s in parts for s in WATCH_SIZES)
 
+def low_price(p):
+    ps = []
+    for v in p.get("variants", []):
+        try:
+            ps.append(float(v["price"]))
+        except (TypeError, ValueError, KeyError):
+            pass
+    return min(ps) if ps else None
+
 def match(p):
     tags = p.get("tags", [])
     if isinstance(tags, list):
@@ -58,6 +68,10 @@ def match(p):
     text = f"{p['title']} {p.get('product_type', '')} {tags}".lower()
     if any(x in text for x in EXCLUDE):
         return False
+    if MAX_PRICE is not None:
+        lp = low_price(p)
+        if lp is None or lp >= MAX_PRICE:
+            return False
     return not KEYWORDS or any(k in text for k in KEYWORDS)
 
 def main():
@@ -72,9 +86,10 @@ def main():
     for p in products:
         pid = str(p["id"])
         url = f"{BASE}/products/{p['handle']}"
-        if NOTIFY_NEW and not first_run and pid not in seen and match(p):
-            new_items.append((p["title"], url))
-        seen.add(pid)
+        if match(p):
+            if NOTIFY_NEW and not first_run and pid not in seen:
+                new_items.append((p["title"], url))
+            seen.add(pid)
 
         for v in p["variants"]:
             vid = str(v["id"])
