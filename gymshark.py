@@ -7,7 +7,7 @@ MAX_PRICE = 30                    # 只盯低於這個價錢（美元）
 SIZES = {"Womens": ["XS", "S", "M"], "Mens": ["S", "M", "L"]}
 NOTIFY_NEW = True
 NOTIFY_RESTOCK = True
-NEW_ONLY_IF_MY_SIZE = False       # True：新品只在有你的尺寸時才通知
+NEW_ONLY_IF_MY_SIZE = True       # True：新品只在有你的尺寸時才通知
 MAX_ITEMS = 40
 LABEL = "Gymshark 清倉"
 GENDER_NAME = {"Womens": "女", "Mens": "男"}
@@ -87,12 +87,29 @@ def wanted_sizes(p):
         s.update(SIZES[g])
     return s
 
+SIZE_MAP = {
+    "XXS": "XXS", "EXTRA EXTRA SMALL": "XXS",
+    "XS": "XS", "EXTRA SMALL": "XS",
+    "S": "S", "SMALL": "S",
+    "M": "M", "MEDIUM": "M",
+    "L": "L", "LARGE": "L",
+    "XL": "XL", "EXTRA LARGE": "XL",
+    "XXL": "XXL", "EXTRA EXTRA LARGE": "XXL",
+}
+
+def norm_size(t):
+    return SIZE_MAP.get(t.strip().upper())
+
 def size_ok(p, title):
-    parts = title.split(" / ")
+    parts = [x.strip() for x in title.split(" / ")]
     if title in ("Default Title", "One Size") or "One Size" in parts:
         return True
     want = wanted_sizes(p)
-    return any(x in want for x in parts)
+    for x in parts:
+        n = norm_size(x)
+        if n and n in want:
+            return True
+    return False
 
 def label_of(p):
     return "/".join(GENDER_NAME[g] for g in genders(p))
