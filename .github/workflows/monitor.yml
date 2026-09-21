@@ -1,7 +1,7 @@
 name: Monitor
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "3-59/10 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -10,11 +10,11 @@ concurrency:
   cancel-in-progress: false
 jobs:
   check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install requests
@@ -23,9 +23,9 @@ jobs:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
         run: |
-          for i in 1 2 3 4 5; do
+          for i in $(seq 1 10); do
             python monitor.py || true
-            if [ $i -lt 5 ]; then sleep 60; fi
+            if [ $i -lt 10 ]; then sleep 60; fi
           done
       - name: Save state
         if: always()
