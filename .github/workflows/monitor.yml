@@ -11,7 +11,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 14
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -21,9 +21,10 @@ jobs:
       - name: Check every minute
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_TOKEN_2: ${{ secrets.TG_TOKEN_2 }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
         run: |
-                    for i in $(seq 1 10); do
+          for i in $(seq 1 10); do
             python monitor.py || true
             if [ $(( (i - 1) % 3 )) -eq 0 ]; then python gymshark.py || true; fi
             if [ $i -lt 10 ]; then sleep 60; fi
@@ -33,5 +34,5 @@ jobs:
         run: |
           git config user.name "monitor-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add state.json
+          git add state*.json
           git diff --cached --quiet || (git commit -m "update state" && git push)
