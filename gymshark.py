@@ -3,7 +3,7 @@ import json, os, re, time, requests
 BASE = "https://gymsharkusa.myshopify.com"
 SHOP = "https://www.gymshark.com"
 COLLECTION = "last-chance"
-MAX_PRICE = 30                    # 只盯低於這個價錢（美元）
+MAX_PRICE = 25                    # 只盯低於這個價錢（美元）
 SIZES = {"Womens": ["XS", "S", "M"], "Mens": ["S", "M", "L"]}
 NOTIFY_NEW = True
 NOTIFY_RESTOCK = True
@@ -136,7 +136,8 @@ def main():
     first_run = not os.path.exists(STATE)
     state = {"seen": [], "stock": {}} if first_run else json.load(open(STATE))
     seen = set(state["seen"])
-    stock = dict(state["stock"])
+    prev_stock = state["stock"]
+    new_stock = {}
 
     products = fetch_all()
     if not products:
@@ -168,9 +169,10 @@ def main():
             vid = str(v["id"])
             avail = bool(v["available"])
             if (cheap and not is_new and NOTIFY_RESTOCK and not first_run
-                    and avail and stock.get(vid) is False and size_ok(p, v["title"])):
+                    and avail and prev_stock.get(vid) is False and size_ok(p, v["title"])):
                 restocks.setdefault((label_of(p), p["title"], info, url), []).append(v["title"])
-            stock[vid] = avail
+            if cheap:
+                new_stock[vid] = avail
 
         if cheap:
             n_cheap += 1
@@ -201,7 +203,7 @@ def main():
     if lines:
         send("\n".join(lines))
 
-    json.dump({"seen": sorted(seen), "stock": stock}, open(STATE, "w"))
+    json.dump({"seen": sorted(seen), "stock": new_stock}, open(STATE, "w"))
     print(f"完成。非配件 {n_rel} 件，低於 ${MAX_PRICE} 的 {n_cheap} 件，排除配件 {n_acc} 件。補貨 {len(restocks)} 件，新品 {len(new_items)} 件。")
     if first_run and acc_sample:
         print("被排除的配件範例：", acc_sample)
