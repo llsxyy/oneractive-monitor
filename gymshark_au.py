@@ -73,10 +73,10 @@ def best_price(p):
     return best
 
 def info_text(best):
-    s = f"${best[0]:.2f}"
+    s = f"AUD {best[0]:.2f}"
     try:
         if best[1]:
-            s += f"（原價 ${float(best[1]):.2f}）"
+            s += f"（原價 AUD {float(best[1]):.2f}）"
     except (TypeError, ValueError):
         pass
     return s
