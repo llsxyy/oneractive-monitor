@@ -24,12 +24,23 @@ jobs:
           TG_TOKEN_2: ${{ secrets.TG_TOKEN_2 }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
         run: |
-          for i in $(seq 1 55); do
+          END=$(( $(date +%s) + 56*60 ))
+          i=0
+          while [ "$(date +%s)" -lt "$END" ]; do
+            i=$((i+1))
+            echo "== round $i =="
+            START=$(date +%s)
             python monitor.py || true
             python gymshark.py || true
             python gymshark_ca.py || true
-            if [ $i -lt 55 ]; then sleep 60; fi
+            python gymshark_au.py || true
+            ELAPSED=$(( $(date +%s) - START ))
+            REMAIN=$(( 60 - ELAPSED ))
+            if [ "$REMAIN" -gt 0 ] && [ "$(date +%s)" -lt "$END" ]; then
+              sleep "$REMAIN"
+            fi
           done
+          echo "共執行 $i 輪"
       - name: Save state
         if: always()
         run: |
