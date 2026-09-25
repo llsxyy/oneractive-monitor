@@ -3,7 +3,7 @@ import json, os, requests
 BASE = "https://www.oneractive.com"
 MAX_PRICE = 25   # 只盯低於這個價錢，None 代表不限
 WATCH_SIZES = ["XS", "S", "M", "L"]   # 只盯這些尺寸，[] 代表全部
-KEYWORDS = ["timeless", "everyday", "unified"]              # 例如 ["leggings", "bra"]，[] 代表全部商品
+KEYWORDS = []  # [] 代表全部商品
 EXCLUDE = ["gift card"]    # 排除的關鍵字
 NOTIFY_NEW = True          # 是否通知新品
 
@@ -74,6 +74,10 @@ def match(p):
             return False
     return not KEYWORDS or any(k in text for k in KEYWORDS)
 
+def price_text(p):
+    lp = low_price(p)
+    return f"USD {lp:.2f}" if lp is not None else "?"
+
 def main():
     first_run = not os.path.exists(STATE)
     state = {"seen": [], "stock": {}} if first_run else json.load(open(STATE))
@@ -88,7 +92,7 @@ def main():
         url = f"{BASE}/products/{p['handle']}"
         if match(p):
             if NOTIFY_NEW and not first_run and pid not in seen:
-                new_items.append((p["title"], url))
+                new_items.append((p["title"], price_text(p), url))
             seen.add(pid)
 
         for v in p["variants"]:
@@ -97,17 +101,17 @@ def main():
             if first_run or not match(p):
                 continue
             if v["available"] and prev_stock.get(vid) is False and size_ok(v["title"]):
-                restocks.setdefault((p["title"], url), []).append(v["title"])
+                restocks.setdefault((p["title"], price_text(p), url), []).append(v["title"])
 
     lines = []
     if restocks:
         lines.append(f"補貨了（{len(restocks)} 件）")
-        for (title, url), vs in restocks.items():
-            lines.append(f"{title}\n{', '.join(vs)}\n{url}\n")
+        for (title, price, url), vs in restocks.items():
+            lines.append(f"{title}\n{price}\n{', '.join(vs)}\n{url}\n")
     if new_items:
         lines.append(f"新品（{len(new_items)} 件）")
-        for title, url in new_items:
-            lines.append(f"{title}\n{url}\n")
+        for title, price, url in new_items:
+            lines.append(f"{title}\n{price}\n{url}\n")
     if lines:
         send("\n".join(lines))
 
