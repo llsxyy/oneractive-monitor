@@ -3,7 +3,7 @@ import json, os, re, time, requests
 BASE = "https://gymsharkusa.myshopify.com"
 SHOP = "https://www.gymshark.com"
 COLLECTION = "last-chance"
-MAX_PRICE = 25                    # 只盯低於這個價錢（美元）
+MAX_PRICE = 20                    # 只盯低於這個價錢（美元）
 SIZES = {"Womens": ["XS", "S", "M"], "Mens": ["S", "M", "L"]}
 NOTIFY_NEW = True
 NOTIFY_RESTOCK = True

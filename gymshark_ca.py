@@ -1,9 +1,9 @@
 import json, os, re, time, requests
 
-BASE = None
+BASE = "https://gymshark-can.myshopify.com"
 SHOP = "https://ca.gymshark.com"
 COLLECTION = "last-chance"
-MAX_PRICE = 30                    # 只盯低於這個價錢（加幣）
+MAX_PRICE = 20                    # 只盯低於這個價錢（加幣）
 SIZES = {"Womens": ["XS", "S", "M"], "Mens": ["S", "M", "L"]}
 NOTIFY_NEW = True
 NOTIFY_RESTOCK = True
@@ -132,33 +132,7 @@ def send(text):
     if chunk.strip():
         post(chunk)
 
-CANDIDATES = [
-    "https://gymshark-can.myshopify.com",
-    "https://gymsharkca.myshopify.com",
-    "https://gymsharkcan.myshopify.com",
-    "https://gymsharkcanada.myshopify.com",
-    "https://gymshark-ca.myshopify.com",
-    "https://gymsharkcad.myshopify.com",
-]
-
-def find_base():
-    cands = ([os.environ["GS_CA_BASE"]] if os.environ.get("GS_CA_BASE") else []) + CANDIDATES
-    for b in cands:
-        try:
-            r = requests.get(f"{b}/collections/{COLLECTION}/products.json",
-                             params={"limit": 20}, headers=HEADERS, timeout=20)
-            if r.status_code != 200:
-                continue
-            items = r.json().get("products", [])
-            if any("last-chance" in tags_of(p) and genders(p) for p in items):
-                return b
-        except Exception:
-            continue
-    raise SystemExit("找不到加拿大站的後台網域，這次略過。")
-
 def main():
-    global BASE
-    BASE = find_base()
     first_run = not os.path.exists(STATE)
     state = {"seen": [], "stock": {}} if first_run else json.load(open(STATE))
     seen = set(state["seen"])
