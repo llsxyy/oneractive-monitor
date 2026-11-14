@@ -32,6 +32,7 @@ jobs:
             echo "== round $i =="
             START=$(date +%s)
             python monitor.py || true
+            python monitor_uk.py || true
             python gymshark.py || true
             python gymshark_ca.py || true
             python gymshark_au.py || true
